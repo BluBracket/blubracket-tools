@@ -109,6 +109,7 @@ class Scan:
             logger.error(f'Unable to get the result after {retries} polls')
             return None
 
+        logger.info('The result is now ready')
         return resp.json()
 
 
@@ -228,18 +229,10 @@ if __name__ == '__main__':
         # Exit immediately if no pull request number or commits to scan
         exit(0)
 
-    print("""
-    BLUBRACKET_CI_CD_API={ci_cd_api}
-    BUILD_REPOSITORY_URI={repo_url}
-    BLUBRACKET_CI_CD_TOKEN=******
-    """)
-
-    if pull_request_number is not None:
-        print('SYSTEM_PULLREQUEST_PULLREQUESTNUMBER={pull_request_number}')
-    elif commits is not None:
-        print('commits={commits}')
-
     try:
+        logger.info(f'BLUBRACKET_CI_CD_API: {ci_cd_api}')
+        logger.info(f'BUILD_REPOSITORY_URI: {repo_url}')
+        logger.info(f'BLUBRACKET_CI_CD_TOKEN: ******')
         client = CicdScanClient(ci_cd_api, ci_cd_token)
         if pull_request_number is not None:
             logger.info(
