@@ -1,23 +1,17 @@
 #!/bin/sh
 
-count=0
-
-function message() {
-    echo "please pass '-e $1=[value_goes_here]' within the docker command"
-    count=$((count+1))
-}
-
-[ -z "$BLUBRACKET_CI_CD_API" ] && message BLUBRACKET_CI_CD_API
-[ -z "$BLUBRACKET_CI_CD_TOKEN" ] && message BLUBRACKET_CI_CD_TOKEN
-[ -z "$BUILD_REPOSITORY_URI" ] && message BUILD_REPOSITORY_URI
-
-if [ "$count" > "0" ]; then
-    echo "Container failed to start, missing '$count' variable(s), please review documentation"
-    #exit 1
-fi
-
 python --version
 
-echo "Starting container"
+# Mount repo directory if not using 'SYSTEM_PULLREQUEST_PULLREQUESTNUMBER'
+# example: docker run -v /git/linux:/linux -e REPO_PATH="/linux ..." 
+if [ ! -z "$REPO_PATH" ] && [ -d "$REPO_PATH" ]; then
+    echo "found REPO_PATH $REPO_PATH"
+    cp ci-cd-scan.py $REPO_PATH
+    cd $REPO_PATH
+fi
 
-exec "python ci-cd-scan.py"
+echo "Starting CI-CD scan container"
+python ci-cd-scan.py
+
+# clean up
+[ ! -z "$REPO_PATH" ] && rm $REPO_PATH/ci-cd-scan.py
