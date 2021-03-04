@@ -12,6 +12,7 @@ from http import HTTPStatus
 from time import sleep
 from typing import List
 
+
 def init_logger():
     logger = logging.getLogger('CI/CD Scan')
     logger.setLevel(logging.INFO)
@@ -20,13 +21,17 @@ def init_logger():
 
     return logger
 
+
 def get_base_branch():
-    remote_branches = subprocess.run(['git', 'branch', '-r'], check=True, stdout=subprocess.PIPE).stdout.decode('utf-8', errors='replace').split()
+    remote_branches = subprocess.run(['git', 'branch', '-r'], check=True,
+                                     stdout=subprocess.PIPE).stdout.decode('utf-8', errors='replace').split()
     if 'origin/main' in (branch.strip() for branch in remote_branches):
         return 'origin/main'
     return 'origin/master'
 
+
 logger = init_logger()
+
 
 class Scan:
     """
@@ -78,9 +83,9 @@ class Scan:
                 if retry == retries - 1:
                     raise e
 
-                logger.info(f'Failed to make a request to get the result: {e}. Retrying...')
+                logger.info(
+                    f'Failed to make a request to get the result: {e}. Retrying...')
                 continue
-
 
             if resp.status_code == HTTPStatus.OK:
                 ready = True
@@ -97,7 +102,8 @@ class Scan:
                     err_msg = f'Service error. HTTP Status: {resp.status_code}'
                 raise Exception(f'Failed to get the result: {err_msg}')
 
-            logger.info(f'Polled {retry+1} times. The result is not ready yet.')
+            logger.info(
+                f'Polled {retry+1} times. The result is not ready yet.')
 
         if not ready:
             logger.error(f'Unable to get the result after {retries} polls')
@@ -207,8 +213,10 @@ if __name__ == '__main__':
         # scan the branch `b` from the tip of the `b` to the common ancestor of `b` and `master`.
         # That is, we assume the branch is to be merged in to the `master` branch.
         base_branch = get_base_branch()
-        base_commit = subprocess.run(['git', 'merge-base', base_branch, 'HEAD'], check=True, stdout=subprocess.PIPE).stdout.decode('utf-8', errors='replace').strip()
-        commits = subprocess.run(['git', 'rev-list', f'{base_commit}..HEAD'], check=True, stdout=subprocess.PIPE).stdout.decode('utf-8', errors='replace').strip().split()
+        base_commit = subprocess.run(['git', 'merge-base', base_branch, 'HEAD'], check=True,
+                                     stdout=subprocess.PIPE).stdout.decode('utf-8', errors='replace').strip()
+        commits = subprocess.run(['git', 'rev-list', f'{base_commit}..HEAD'], check=True,
+                                 stdout=subprocess.PIPE).stdout.decode('utf-8', errors='replace').strip().split()
         if not commits:
             logger.info("No pull request number and commits specified")
 
@@ -220,17 +228,30 @@ if __name__ == '__main__':
         # Exit immediately if no pull request number or commits to scan
         exit(0)
 
+    print("""
+    BLUBRACKET_CI_CD_API={ci_cd_api}
+    BUILD_REPOSITORY_URI={repo_url}
+    BLUBRACKET_CI_CD_TOKEN=******
+    """)
+
+    if pull_request_number is not None:
+        print('SYSTEM_PULLREQUEST_PULLREQUESTNUMBER={pull_request_number}')
+    elif commits is not None:
+        print('commits={commits}')
+
     try:
         client = CicdScanClient(ci_cd_api, ci_cd_token)
         if pull_request_number is not None:
-            logger.info(f'Requesting to scan pull request #{pull_request_number}')
+            logger.info(
+                f'Requesting to scan pull request #{pull_request_number}')
             scan = client.scan_pull_request(repo_url, int(pull_request_number))
         else:
             logger.info(f'Requesting to scan commits {commits}')
             scan = client.scan_commits(repo_url, commits)
         result = scan.get_result()
         if not result:
-            print('##vso[task.complete result=SucceededWithIssues;] Unable to get the result from the scan API')
+            print(
+                '##vso[task.complete result=SucceededWithIssues;] Unable to get the result from the scan API')
             exit(0)
 
         if result['secrets']:
@@ -242,7 +263,8 @@ if __name__ == '__main__':
             # Currently we don't fail the build if secrets are found.
             # Instead we mark the stage as "partially succeeded" and a warning icon is shown on the build.
             # See https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logger-commands?view=azure-devops&tabs=bash#complete-finish-timeline
-            print('##vso[task.complete result=SucceededWithIssues;] Secrets found')
+            print(
+                '##vso[task.complete result=SucceededWithIssues;] Secrets found')
         else:
             print('No secrets found')
     except Exception as e:
