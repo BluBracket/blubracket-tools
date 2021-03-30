@@ -9,7 +9,7 @@ from debug import save
 def start_install(session, target_name, target_id):
     """
     Start the installation process by pulling the install and authorize form.
-    Returns tuple of (authenticity_token, target_type, integration_fingerprint).
+    Returns tuple of (authenticity_token, target_type, version_id, integration_fingerprint).
 
     Will return None if current user does not have permissions to install.
     """
