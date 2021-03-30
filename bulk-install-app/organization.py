@@ -1,7 +1,8 @@
+import re
+
 from bs4 import BeautifulSoup
 from config import DOMAIN, GITHUB_APP_NAME
 from debug import save
-import re
 
 
 def organizations_by_page(session):

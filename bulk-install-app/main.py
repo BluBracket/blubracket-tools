@@ -1,10 +1,11 @@
-from config import GITHUB_APP_NAME
-from login import setup_login
-from install import install_and_uninstall_if_necessary
-from organization import organizations_to_install_on
 import asyncio
 import random
+
 import requests
+from config import GITHUB_APP_NAME
+from install import install_and_uninstall_if_necessary
+from login import setup_login
+from organization import organizations_to_install_on
 
 if __name__ == '__main__':
     session = requests.Session()

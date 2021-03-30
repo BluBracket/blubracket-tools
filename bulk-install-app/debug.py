@@ -1,5 +1,6 @@
-from config import DEBUG
 import os
+
+from config import DEBUG
 
 
 def save(folder, name, response):
@@ -7,15 +8,15 @@ def save(folder, name, response):
         if not os.path.exists(f"{folder}"):
             os.makedirs(f"{folder}")
 
-        file = open(f"{folder}/{name}-content.html", "w+")
+        file = open(f"{folder}/{name}-content.html", "w")
         file.write(response.content.decode("utf-8"))
         file.close()
 
-        file = open(f"{folder}/{name}-text.txt", "w+")
+        file = open(f"{folder}/{name}-text.txt", "w")
         file.write(response.text)
         file.close()
 
-        file = open(f"{folder}/{name}-headers.txt", "w+")
+        file = open(f"{folder}/{name}-headers.txt", "w")
         file.write(str(response.headers))
         file.close()
 
@@ -27,7 +28,4 @@ def translate_to_curl(response):
         method, uri, data = req.method, req.url, req.body
         headers = ["'{0}: {1}'".format(k, v) for k, v in req.headers.items()]
         headers = " -H ".join(headers)
-        print(
-            f'cURL equivalent of request: '
-            f'{command.format(method=method, headers=headers, data=data, uri=uri)}'
-        )
+        print(f'cURL equivalent of request: {command.format(method=method, headers=headers, data=data, uri=uri)}')

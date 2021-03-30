@@ -1,8 +1,9 @@
+import re
+from urllib.parse import parse_qs, urlparse
+
+from bs4 import BeautifulSoup
 from config import DOMAIN, GITHUB_APP_NAME
 from debug import save
-from urllib.parse import urlparse, parse_qs
-from bs4 import BeautifulSoup
-import re
 
 
 def start_install(session, target_name, target_id):
@@ -30,12 +31,13 @@ def start_install(session, target_name, target_id):
     installation_form = installation_page_soup.find('form', {'action': f'/apps/{GITHUB_APP_NAME}/installations'})
     authenticity_token = installation_form.find('input', {'name': 'authenticity_token'}).get('value')
     target_type = installation_form.find('input', {'name': 'target_type'}).get('value')
+    version_id = installation_form.find('input', {'name': 'version_id'}).get('value')
     integration_fingerprint = installation_form.find('input', {'name': 'integration_fingerprint'}).get('value')
 
-    return authenticity_token, target_type, integration_fingerprint
+    return authenticity_token, target_type, version_id, integration_fingerprint
 
 
-def process_install(session, authenticity_token, target_id, target_type, integration_fingerprint):
+def process_install(session, authenticity_token, target_id, target_type, version_id, integration_fingerprint):
     """
     Install the app on the target_id / target_type specified in input params.
     """
@@ -44,7 +46,7 @@ def process_install(session, authenticity_token, target_id, target_type, integra
         'authenticity_token': authenticity_token,
         'target_id': target_id,
         'target_type': target_type,
-        'version_id': '147771',
+        'version_id': version_id,
         'integration_fingerprint': integration_fingerprint,
         'install_target': 'all',
     }
@@ -57,8 +59,8 @@ def process_install(session, authenticity_token, target_id, target_type, integra
         'upgrade-insecure-requests': '1',
         'origin': f'https://{DOMAIN}',
         'content-type': 'application/x-www-form-urlencoded',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36',
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36',  # noqa E501
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',  # noqa E501
         'sec-fetch-site': 'same-origin',
         'sec-fetch-mode': 'navigate',
         'sec-fetch-user': '?1',
@@ -100,13 +102,14 @@ def install(session, target_name, target_id):
     try:
         installation_data = start_install(session=session, target_name=target_name, target_id=target_id)
         if installation_data:
-            authenticity_token, target_type, integration_fingerprint = installation_data
+            authenticity_token, target_type, version_id, integration_fingerprint = installation_data
             installed_page_soup = process_install(
                 session=session,
                 authenticity_token=authenticity_token,
                 target_id=target_id,
                 target_type=target_type,
-                integration_fingerprint=integration_fingerprint
+                version_id=version_id,
+                integration_fingerprint=integration_fingerprint,
             )
 
             success = redirect_install(session=session, installed_page_soup=installed_page_soup)
@@ -141,7 +144,9 @@ def uninstall(session, target_name, target_id):
         save(folder='uninstall-data', name=f'uninstall-{target_name}-start', response=uninstall_start_response)
 
         uninstallation_page_soup = BeautifulSoup(uninstall_start_response.content, 'html.parser')
-        uninstallation_form = uninstallation_page_soup.find('form', {'action': re.compile('/settings/installations/[0-9]*$')})
+        uninstallation_form = uninstallation_page_soup.find(
+            'form', {'action': re.compile('/settings/installations/[0-9]*$')}
+        )
 
         authenticity_token = uninstallation_form.find('input', {'name': 'authenticity_token'}).get('value')
         uninstallation_action = uninstallation_form.get('action')

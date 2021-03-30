@@ -1,7 +1,8 @@
-from bs4 import BeautifulSoup
-from config import DOMAIN, USERNAME, PASSWORD
-from debug import save
 import re
+
+from bs4 import BeautifulSoup
+from config import DOMAIN, PASSWORD, USERNAME
+from debug import save
 
 
 def start_login(session):
