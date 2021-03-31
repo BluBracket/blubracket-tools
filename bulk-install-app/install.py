@@ -1,4 +1,5 @@
 import re
+import traceback
 from urllib.parse import parse_qs, urlparse
 
 from bs4 import BeautifulSoup
@@ -157,6 +158,7 @@ def uninstall(session, target_name, target_id):
         uninstall_complete_page = BeautifulSoup(uninstall_complete_response.content, 'html.parser')
         return check_uninstall(uninstall_complete_page)
     except Exception:
+        traceback.print_exc()
         return False
 
 

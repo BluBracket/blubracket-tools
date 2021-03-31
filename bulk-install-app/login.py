@@ -1,4 +1,5 @@
 import re
+import traceback
 
 from bs4 import BeautifulSoup
 from config import DOMAIN, PASSWORD, USERNAME
@@ -99,6 +100,7 @@ def setup_login(session):
         login_success = check_login_success(login_page_main=login_page_main)
         login_success = login_success and handle_tfa(session=session, login_page=login_page)
     except Exception:
+        traceback.print_exc()
         login_success = False
 
     if login_success:
