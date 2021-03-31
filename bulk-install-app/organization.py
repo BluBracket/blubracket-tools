@@ -1,7 +1,7 @@
 import re
 
 from bs4 import BeautifulSoup
-from config import DOMAIN, GITHUB_APP_NAME
+from config import APPS_LOCATION, DOMAIN, GITHUB_APP_NAME
 from debug import save
 
 
@@ -9,7 +9,7 @@ def organizations_by_page(session):
     """
     Returns a generator of organizations/users to install the app on, by page.
     """
-    url = f'https://{DOMAIN}/apps/{GITHUB_APP_NAME}/installations/new'
+    url = f'https://{DOMAIN}/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations/new'
     app_install_response = session.get(url)
     save(folder='organization-data', name='page-1', response=app_install_response)
     app_install_page_soup = BeautifulSoup(app_install_response.content, 'html.parser')

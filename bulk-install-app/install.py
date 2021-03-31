@@ -3,7 +3,7 @@ import traceback
 from urllib.parse import parse_qs, urlparse
 
 from bs4 import BeautifulSoup
-from config import DOMAIN, GITHUB_APP_NAME
+from config import APPS_LOCATION, DOMAIN, GITHUB_APP_NAME
 from debug import save
 
 
@@ -14,7 +14,8 @@ def start_install(session, target_name, target_id):
 
     Will return None if current user does not have permissions to install.
     """
-    url = f'https://{DOMAIN}/apps/{GITHUB_APP_NAME}/installations/new/permissions?target_id={target_id}'
+    url = f'https://{DOMAIN}/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations/new/permissions?target_id={target_id}'
+
     installation_response = session.get(url)
     installation_page_soup = BeautifulSoup(installation_response.content, 'html.parser')
     save(folder='install-data', name='install', response=installation_response)
@@ -29,7 +30,7 @@ def start_install(session, target_name, target_id):
         print(f'Error parsing installation page and button for organization/user: {target_name}. Skipping. ')
         return
 
-    installation_form = installation_page_soup.find('form', {'action': f'/apps/{GITHUB_APP_NAME}/installations'})
+    installation_form = installation_page_soup.find('form', {'action': f'/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations'})
     authenticity_token = installation_form.find('input', {'name': 'authenticity_token'}).get('value')
     target_type = installation_form.find('input', {'name': 'target_type'}).get('value')
     version_id = installation_form.find('input', {'name': 'version_id'}).get('value')
@@ -42,7 +43,7 @@ def process_install(session, authenticity_token, target_id, target_type, version
     """
     Install the app on the target_id / target_type specified in input params.
     """
-    url = f'https://{DOMAIN}/apps/{GITHUB_APP_NAME}/installations'
+    url = f'https://{DOMAIN}/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations'
     installation_request_data = {
         'authenticity_token': authenticity_token,
         'target_id': target_id,
@@ -66,7 +67,7 @@ def process_install(session, authenticity_token, target_id, target_type, version
         'sec-fetch-mode': 'navigate',
         'sec-fetch-user': '?1',
         'sec-fetch-dest': 'document',
-        'referer': f'https://{DOMAIN}/apps/{GITHUB_APP_NAME}/installations/new/permissions?target_id={target_id}',
+        'referer': f'{url}/new/permissions?target_id={target_id}',
         'accept-language': 'en-US,en;q=0.9',
     }
 
@@ -140,7 +141,7 @@ def uninstall(session, target_name, target_id):
     Returns boolean for whether uninstall succeeded.
     """
     try:
-        url = f'https://{DOMAIN}/apps/{GITHUB_APP_NAME}/installations/new/permissions?target_id={target_id}'
+        url = f'https://{DOMAIN}/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations/new/permissions?target_id={target_id}'
         uninstall_start_response = session.get(url)
         save(folder='uninstall-data', name=f'uninstall-{target_name}-start', response=uninstall_start_response)
 

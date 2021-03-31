@@ -3,7 +3,7 @@ import random
 from datetime import datetime
 
 import requests
-from config import GITHUB_APP_NAME
+from config import DOMAIN, GITHUB_APP_NAME
 from install import install_and_uninstall_if_necessary
 from login import setup_login
 from organization import organizations_to_install_on
@@ -13,6 +13,8 @@ if __name__ == '__main__':
 
     # Handle logging in
     print(datetime.now())
+    print(f'GitHub App: {GITHUB_APP_NAME}, Domain: {DOMAIN}')
+    print('\n')
     setup_login(session=session)
 
     # Get all organizations

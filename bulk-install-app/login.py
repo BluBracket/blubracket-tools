@@ -37,11 +37,9 @@ def complete_login(session, login_form):
         'client_id': '',
         'integration': '',
         'required_field_e106': '',
-        'timestamp': login_form.find('input', {'name': 'timestamp'}).get('value'),
-        'timestamp_secret': login_form.find('input', {'name': 'timestamp_secret'}).get('value'),
     }
 
-    login_response = session.post('https://github.com/session', login_request_data)
+    login_response = session.post(f'https://{DOMAIN}/session', login_request_data)
     login_page_soup = BeautifulSoup(login_response.content, 'html.parser')
     save(folder='login-data', name='login-complete', response=login_response)
 
