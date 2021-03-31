@@ -6,7 +6,7 @@
    - `BLU_USERNAME` - the GitHub user's username
    - `BLU_PASSWORD` - the GitHub user's password
    - `BLU_DOMAIN` - the domain of the GitHub Enterprise Server (optional: only required for GitHub Enterprise Server)
-3. Run the script with the following command: `python3 main.py | tee -a bulk-install-app-results.txt`  
+3. Run the script with the following command: `unbuffer python3 main.py | tee -a bulk-install-app-results.txt`  
    NOTE: Only organizations/users that the logged in GitHub user has permissions to install on will be installed.
    - If two-factor authentication is enabled, the script with request input for the one-time password.
 4. Take note of instances of the following logs, which require action:
