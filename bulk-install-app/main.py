@@ -1,5 +1,6 @@
 import asyncio
 import random
+from datetime import datetime
 
 import requests
 from config import GITHUB_APP_NAME
@@ -11,6 +12,7 @@ if __name__ == '__main__':
     session = requests.Session()
 
     # Handle logging in
+    print(datetime.now())
     setup_login(session=session)
 
     # Get all organizations
@@ -24,6 +26,6 @@ if __name__ == '__main__':
         )
 
         # Sleep briefly between installations
-        delay = random.choice([0.5, 0.75, 1, 1.25, 1.5])
+        delay = random.randint(5, 20)
         asyncio.run(asyncio.sleep(delay))
         print('\n')
