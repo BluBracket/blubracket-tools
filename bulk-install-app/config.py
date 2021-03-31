@@ -1,11 +1,8 @@
 import os
-from os.path import join
 
 from dotenv import load_dotenv
 
-cwd = os.getcwd().rstrip('/')
-dotenv_path = join(cwd, '.env')
-load_dotenv(dotenv_path)
+load_dotenv()
 
 DOMAIN = os.environ.get('BLU_DOMAIN') or 'github.com'
 GITHUB_APP_NAME = os.environ.get('BLU_GITHUB_APP_NAME')  # or 'blubracket-checks-app'
