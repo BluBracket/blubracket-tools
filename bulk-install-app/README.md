@@ -1,5 +1,8 @@
 # [BluBracket](https://blubracket.com/) Bulk Installation Script for GitHub Checks App
 
+## Requirements
+- [python >= 3.6](https://www.python.org/downloads/)
+- [python package dotenv](https://pypi.org/project/python-dotenv/)
 ## Bulk installing a GitHub Checks App across organizations
 1. Navigate to BluBracket portal, and import the organizations that need to install the GitHub App 
 2. In `blubracket-tools/bulk-install-app/`, generate an environment file `.env`, with the following variables set:
