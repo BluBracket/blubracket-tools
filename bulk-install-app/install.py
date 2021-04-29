@@ -1,5 +1,6 @@
 import re
 import traceback
+from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
 from bs4 import BeautifulSoup
@@ -96,10 +97,12 @@ def redirect_install(session, installed_page_soup) -> bool:
     return 'success' in redirect_response.text.lower()
 
 
-def install(session, target_name, target_id):
+def install(session, target_name, target_id) -> Optional[bool]:
     """
     Manages full installation workflow - start, process, redirect.
-    Returns boolean for whether this has occurred without any errors.
+
+    Returns boolean for whether installation has occurred without any errors.
+    Returns None if user did not have permissions to install, or if errors occurred in pre-installation parsing.
     """
     try:
         installation_data = start_install(session=session, target_name=target_name, target_id=target_id)
@@ -120,7 +123,7 @@ def install(session, target_name, target_id):
             else:
                 print(f'Failed installation for GitHub organization/user: {target_name}')
             return success
-        return True
+        return None
     except Exception:
         return False
 
@@ -170,7 +173,7 @@ def install_and_uninstall_if_necessary(session, target_name, target_install_url)
     """
     target_id = parse_qs(urlparse(target_install_url).query)['target_id'][0]
     installation_without_errors = install(session=session, target_name=target_name, target_id=target_id)
-    if not installation_without_errors:
+    if installation_without_errors is False:
         uninstall_success = uninstall(session=session, target_name=target_name, target_id=target_id)
 
         if not uninstall_success:
@@ -187,3 +190,5 @@ def install_and_uninstall_if_necessary(session, target_name, target_install_url)
                 f'\t Uninstall succeeded. Double check that org/user has been imported in BluBracket portal, \n'
                 f'\t and re-run this script. If failure continues, contact support. '
             )
+
+    return bool(installation_without_errors)

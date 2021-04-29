@@ -10,6 +10,7 @@ GITHUB_APP_NAME = os.environ.get('BLU_GITHUB_APP_NAME') or 'blubracket-checks-ap
 USERNAME = os.environ.get('BLU_USERNAME')
 PASSWORD = os.environ.get('BLU_PASSWORD')
 DEBUG = bool(int(os.environ.get('BLU_DEBUG'))) if os.environ.get('BLU_DEBUG') else False
+MAX_ORGANIZATIONS = int(os.environ.get('BLU_MAX_ORGANIZATIONS')) if os.environ.get('BLU_MAX_ORGANIZATIONS') else None
 
 DOMAIN = urlparse(DOMAIN if '//' in DOMAIN else f'//{DOMAIN}').netloc
 APPS_LOCATION = 'apps' if DOMAIN == 'github.com' else 'github-apps'

@@ -10,6 +10,8 @@
    - `BLU_USERNAME` - the GitHub user's username
    - `BLU_PASSWORD` - the GitHub user's password
    - `BLU_DOMAIN` - the domain of the GitHub Enterprise Server (optional: only required for GitHub Enterprise Server)
+   - `BLU_MAX_ORGANIZATIONS` - maximum number of successful organization installations per run of script 
+     (optional: if not set, will install on all organizations)
 3. Run the script with the following command: `python3 -u main.py 2>&1 | tee -a bulk-install-app-results.txt`  
    NOTE: Only organizations/users that the logged in GitHub user has permissions to install on will be installed.
    - If two-factor authentication is enabled, the script with request input for the one-time password.
@@ -22,8 +24,3 @@
       - Action item: Manually uninstall the app from the organization, double check that the organization is imported in the BluBracket portal (from step 1.), then manually install the app on this organization or re-run the script. If failure continues, contact support.
         
 When contacting support, please send over the `bulk-install-app-results.txt` file generated from step 3. 
-   
-   
-   
-
-
