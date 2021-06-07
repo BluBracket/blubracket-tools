@@ -25,7 +25,10 @@ def start_install(session, target_name, target_id):
     if 'install & authorize' in installation_button.string.lower():
         print(f'User has permissions to install on organization/user: {target_name}. Installing.')
     elif 'authorize & request' in installation_button.string.lower():
-        print(f'User does not have permissions to install on organization/user: {target_name}. Skipping. ')
+        print(f'User does not have any permissions to install on organization/user: {target_name}. Skipping. ')
+        return
+    elif 'install, authorize, & request' in installation_button.string.lower():
+        print(f'User does not have owner permissions to install on organization.user: {target_name}. Skipping. ')
         return
     else:
         print(f'Error parsing installation page and button for organization/user: {target_name}. Skipping. ')
@@ -138,13 +141,21 @@ def check_uninstall(uninstall_complete_page):
     return 'job has been queued to uninstall' in uninstall_complete_page_message.text
 
 
-def uninstall(session, target_name, target_id):
+def uninstall(session, target_name: str, target_id: Optional[int] = None, installation_path: Optional[str] = None):
     """
     Manages full uninstallation workflow - start, complete.
     Returns boolean for whether uninstall succeeded.
     """
+    if not target_id and not installation_path:
+        print(f'Neither target_id nor installation path was passed in, cannot uninstall organization/user: {target_name}.')
+        return False
+
     try:
-        url = f'https://{DOMAIN}/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations/new/permissions?target_id={target_id}'
+        if target_id:
+            url = f'https://{DOMAIN}/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations/new/permissions?target_id={target_id}'
+        else:
+            url = f'https://{DOMAIN}{installation_path}'
+
         uninstall_start_response = session.get(url)
         save(folder='uninstall-data', name=f'uninstall-{target_name}-start', response=uninstall_start_response)
 

@@ -27,24 +27,42 @@ def organizations_by_page(session):
             yield app_install_page_main
 
 
-def organizations_by_item(app_install_page_soup):
+def organizations_to_install_on_by_item(app_install_page_soup):
     """
     Given a page of organizations/users to install the app on, returns a generator by item.
     Filters out organizations/users that have already installed the app.
     """
     for row in app_install_page_soup.find_all('a', {'class': re.compile('Box-row*', re.IGNORECASE)}):
         target_name = row.find('img').get('alt').lstrip('@')
-        target_install_url = row.get('href')
+        target_url = row.get('href')
         if 'is installed' in row.find('span').get('aria-label').lower():
             print(f'Organization/user: {target_name} has already installed app: {GITHUB_APP_NAME}. Skipping. \n')
             continue
-        yield target_name, target_install_url
+        yield target_name, target_url
 
 
-def organizations_to_install_on(session):
+def organizations_to_uninstall_on_by_item(app_install_page_soup):
+    """
+    Given a page of organizations/users to uninstall the app on, returns a generator by item.
+    Filters out organizations/users that haven't yet installed the app.
+    """
+    for row in app_install_page_soup.find_all('a', {'class': re.compile('Box-row*', re.IGNORECASE)}):
+        target_name = row.find('img').get('alt').lstrip('@')
+        target_url = row.get('href')
+        if 'is installed' not in row.find('span').get('aria-label').lower():
+            print(f'Organization/user: {target_name} has not yet installed app: {GITHUB_APP_NAME}. Skipping. \n')
+            continue
+        yield target_name, target_url
+
+
+def organizations(session, uninstall: bool):
     """
     Returns a generator of organizations to install on.
     """
     for app_install_page_soup in organizations_by_page(session=session):
-        for organization_tuple in organizations_by_item(app_install_page_soup=app_install_page_soup):
+        organizations_by_item_generator = (
+            organizations_to_uninstall_on_by_item if uninstall else organizations_to_install_on_by_item
+        )
+
+        for organization_tuple in organizations_by_item_generator(app_install_page_soup=app_install_page_soup):
             yield organization_tuple
