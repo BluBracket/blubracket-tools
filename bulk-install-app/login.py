@@ -3,7 +3,7 @@ import traceback
 
 from bs4 import BeautifulSoup
 from config import DOMAIN, PASSWORD, USERNAME
-from debug import save
+from debug import save_debug_info
 
 
 def start_login(session):
@@ -12,7 +12,7 @@ def start_login(session):
     """
     login_response = session.get(f'https://{DOMAIN}/login')
     login_page_soup = BeautifulSoup(login_response.content, 'html.parser')
-    save(folder='login-data', name='login-start', response=login_response)
+    save_debug_info(folder='login-data', name='login-start', response=login_response)
 
     login_form = login_page_soup.find('form', {'action': '/session'})
     return login_form
@@ -41,7 +41,7 @@ def complete_login(session, login_form):
 
     login_response = session.post(f'https://{DOMAIN}/session', login_request_data)
     login_page_soup = BeautifulSoup(login_response.content, 'html.parser')
-    save(folder='login-data', name='login-complete', response=login_response)
+    save_debug_info(folder='login-data', name='login-complete', response=login_response)
 
     return login_page_soup
 
@@ -82,7 +82,7 @@ def handle_tfa(session, login_page):
     authenticity_token = two_factor_form.find('input', {'name': 'authenticity_token'}).get('value')
     two_factor_data = {'authenticity_token': authenticity_token, 'otp': otp}
     tfa_response = session.post('https://github.com/sessions/two-factor', two_factor_data)
-    save(folder='login-data', name='tfa', response=tfa_response)
+    save_debug_info(folder='login-data', name='tfa', response=tfa_response)
 
     tfa_login_page = BeautifulSoup(tfa_response.content, 'html.parser')
 

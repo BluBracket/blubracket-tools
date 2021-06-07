@@ -2,7 +2,7 @@ import re
 
 from bs4 import BeautifulSoup
 from config import APPS_LOCATION, DOMAIN, GITHUB_APP_NAME
-from debug import save
+from debug import save_debug_info
 
 
 def organizations_by_page(session):
@@ -11,7 +11,7 @@ def organizations_by_page(session):
     """
     url = f'https://{DOMAIN}/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations/new'
     app_install_response = session.get(url)
-    save(folder='organization-data', name='page-1', response=app_install_response)
+    save_debug_info(folder='organization-data', name='page-1', response=app_install_response)
     app_install_page_soup = BeautifulSoup(app_install_response.content, 'html.parser')
     app_install_page_main = app_install_page_soup.find('div', {'class': 'application-main'})
     current_elem = app_install_page_soup.find('em', {'class': 'current'})
@@ -21,7 +21,7 @@ def organizations_by_page(session):
         total_pages = current_elem.get('data-total-pages')
         for page_number in range(2, int(total_pages) + 1):
             app_install_response = session.get(f'{url}?page={page_number}')
-            save(folder='organization-data', name=f'page-{page_number}', response=app_install_response)
+            save_debug_info(folder='organization-data', name=f'page-{page_number}', response=app_install_response)
             app_install_page_soup = BeautifulSoup(app_install_response.content, 'html.parser')
             app_install_page_main = app_install_page_soup.find('div', {'class': 'application-main'})
             yield app_install_page_main
