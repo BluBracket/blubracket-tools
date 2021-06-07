@@ -12,8 +12,9 @@
    - `BLU_DOMAIN` - the domain of the GitHub Enterprise Server (optional: only required for GitHub Enterprise Server)
    - `BLU_MAX_ORGANIZATIONS` - maximum number of successful organization installations per run of script 
      (optional: if not set, will install on all organizations)
-3. Run the script with the following command: `python3 -u main.py 2>&1 | tee -a bulk-install-app-results.txt`  
-   NOTE: Only organizations/users that the logged in GitHub user has permissions to install on will be installed.
+3. Run the script with the following command to install: `python3 -u main.py 2>&1 | tee -a bulk-install-app-results.txt`
+   Run the script with the following command to uninstall: `python3 -u main.py --uninstall 2>&1 | tee -a bulk-install-app-results.txt`
+   NOTE: Only organizations/users that the logged in GitHub user has permissions to install/uninstall on will be installed/uninstalled.
    - If two-factor authentication is enabled, the script will request input for the one-time password.
 4. Take note of instances of the following logs, which require action:
    - ```User does not have any/owner permissions to install on organization/user: <organization_name>. Skipping. ```
