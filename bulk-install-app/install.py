@@ -28,7 +28,7 @@ def start_install(session, target_name, target_id):
         print(f'User does not have any permissions to install on organization/user: {target_name}. Skipping. ')
         return
     elif 'install, authorize, & request' in installation_button.string.lower():
-        print(f'User does not have owner permissions to install on organization.user: {target_name}. Skipping. ')
+        print(f'User does not have owner permissions to install on organization/user: {target_name}. Skipping. ')
         return
     else:
         print(f'Error parsing installation page and button for organization/user: {target_name}. Skipping. ')
