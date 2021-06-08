@@ -3,7 +3,7 @@ import os
 from config import DEBUG
 
 
-def save(folder, name, response):
+def save_debug_info(folder, name, response):
     if DEBUG:
         if not os.path.exists(f"{folder}"):
             os.makedirs(f"{folder}")

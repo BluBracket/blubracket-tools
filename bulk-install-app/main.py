@@ -1,38 +1,58 @@
+import argparse
 import asyncio
 import random
 from datetime import datetime
 
 import requests
 from config import DOMAIN, GITHUB_APP_NAME, MAX_ORGANIZATIONS
-from install import install_and_uninstall_if_necessary
+from install import install_and_uninstall_if_necessary, uninstall
 from login import setup_login
-from organization import organizations_to_install_on
+from organization import organizations
+
 
 if __name__ == '__main__':
     session = requests.Session()
+    parser = argparse.ArgumentParser()
 
-    # Handle logging in
-    print(datetime.now())
+    parser.add_argument('-u', '--uninstall', action='store_true', default=False)
+    args = parser.parse_args()
+    action = 'Uninstall' if args.uninstall else 'Install'
+
+    print('\n')
+    print(f'{datetime.now()} - Bulk {action}')
     print(f'GitHub App: {GITHUB_APP_NAME}, Domain: {DOMAIN}, Max Organizations: {MAX_ORGANIZATIONS}')
     print('\n')
+
+    # Handle logging in
     setup_login(session=session)
 
     # Get all organizations
-    successful_installation_counter = 0
-    for organization_tuple in organizations_to_install_on(session):
+    success_counter = 0
+    for organization_tuple in organizations(session, uninstall=args.uninstall):
         # Handle installation for one organization
-        target_name, target_install_url = organization_tuple
-        print(f'Found organization/user: {target_name}, to install app: {GITHUB_APP_NAME}.')
+        target_name, target_url = organization_tuple
+        if not args.uninstall:
+            print(f'Found organization/user: {target_name}, to install app: {GITHUB_APP_NAME}.')
 
-        installation_success = install_and_uninstall_if_necessary(
-            session=session, target_name=target_name, target_install_url=target_install_url
-        )
+            # Marking installation success
+            success = install_and_uninstall_if_necessary(
+                session=session, target_name=target_name, target_install_url=target_url
+            )
+        else:
+            print(f'Found organization/user: {target_name}, to uninstall app: {GITHUB_APP_NAME}.')
 
+            # Marking uninstallation success
+            success = uninstall(session=session, target_name=target_name, installation_path=target_url)
+
+            if success:
+                print(f'Succeeded uninstallation for GitHub organization/user: {target_name}')
+            else:
+                print(f'Failed uninstallation for GitHub organization/user: {target_name}')
         print('\n')
 
         # Stop early if succeeded on max installations
-        successful_installation_counter += int(installation_success)
-        if MAX_ORGANIZATIONS and successful_installation_counter == MAX_ORGANIZATIONS:
+        success_counter += int(success)
+        if MAX_ORGANIZATIONS and success_counter == MAX_ORGANIZATIONS:
             print(f'Hit max organizations: {MAX_ORGANIZATIONS}, finishing. ')
             break
 

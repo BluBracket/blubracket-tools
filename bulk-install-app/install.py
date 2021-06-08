@@ -5,7 +5,7 @@ from urllib.parse import parse_qs, urlparse
 
 from bs4 import BeautifulSoup
 from config import APPS_LOCATION, DOMAIN, GITHUB_APP_NAME
-from debug import save
+from debug import save_debug_info
 
 
 def start_install(session, target_name, target_id):
@@ -19,13 +19,16 @@ def start_install(session, target_name, target_id):
 
     installation_response = session.get(url)
     installation_page_soup = BeautifulSoup(installation_response.content, 'html.parser')
-    save(folder='install-data', name='install', response=installation_response)
+    save_debug_info(folder='install-data', name='install', response=installation_response)
 
     installation_button = installation_page_soup.find('button', {'data-octo-click': 'install_integration'})
     if 'install & authorize' in installation_button.string.lower():
         print(f'User has permissions to install on organization/user: {target_name}. Installing.')
     elif 'authorize & request' in installation_button.string.lower():
-        print(f'User does not have permissions to install on organization/user: {target_name}. Skipping. ')
+        print(f'User does not have any permissions to install on organization/user: {target_name}. Skipping. ')
+        return
+    elif 'install, authorize, & request' in installation_button.string.lower():
+        print(f'User does not have owner permissions to install on organization/user: {target_name}. Skipping. ')
         return
     else:
         print(f'Error parsing installation page and button for organization/user: {target_name}. Skipping. ')
@@ -74,7 +77,7 @@ def process_install(session, authenticity_token, target_id, target_type, version
 
     installed_response = session.post(url, installation_request_data, headers=headers)
     installed_page_soup = BeautifulSoup(installed_response.content, 'html.parser')
-    save(folder='install-data', name='installed', response=installed_response)
+    save_debug_info(folder='install-data', name='installed', response=installed_response)
 
     return installed_page_soup
 
@@ -93,7 +96,7 @@ def redirect_install(session, installed_page_soup) -> bool:
         return False
 
     redirect_response = session.get(redirect_url)
-    save(folder='install-data', name='redirect', response=redirect_response)
+    save_debug_info(folder='install-data', name='redirect', response=redirect_response)
     return 'success' in redirect_response.text.lower()
 
 
@@ -138,15 +141,23 @@ def check_uninstall(uninstall_complete_page):
     return 'job has been queued to uninstall' in uninstall_complete_page_message.text
 
 
-def uninstall(session, target_name, target_id):
+def uninstall(session, target_name: str, target_id: Optional[int] = None, installation_path: Optional[str] = None):
     """
     Manages full uninstallation workflow - start, complete.
     Returns boolean for whether uninstall succeeded.
     """
+    if not target_id and not installation_path:
+        print(f'Neither target_id nor installation path was passed in, cannot uninstall organization/user: {target_name}.')
+        return False
+
     try:
-        url = f'https://{DOMAIN}/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations/new/permissions?target_id={target_id}'
+        if target_id:
+            url = f'https://{DOMAIN}/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations/new/permissions?target_id={target_id}'
+        else:
+            url = f'https://{DOMAIN}{installation_path}'
+
         uninstall_start_response = session.get(url)
-        save(folder='uninstall-data', name=f'uninstall-{target_name}-start', response=uninstall_start_response)
+        save_debug_info(folder='uninstall-data', name=f'uninstall-{target_name}-start', response=uninstall_start_response)
 
         uninstallation_page_soup = BeautifulSoup(uninstall_start_response.content, 'html.parser')
         uninstallation_form = uninstallation_page_soup.find(
@@ -158,7 +169,7 @@ def uninstall(session, target_name, target_id):
 
         uninstall_data = {'authenticity_token': authenticity_token, '_method': 'delete'}
         uninstall_complete_response = session.post(f'https://{DOMAIN}{uninstallation_action}', uninstall_data)
-        save(folder='uninstall-data', name=f'uninstall-{target_name}-complete', response=uninstall_complete_response)
+        save_debug_info(folder='uninstall-data', name=f'uninstall-{target_name}-complete', response=uninstall_complete_response)
         uninstall_complete_page = BeautifulSoup(uninstall_complete_response.content, 'html.parser')
         return check_uninstall(uninstall_complete_page)
     except Exception:
