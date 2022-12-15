@@ -135,10 +135,7 @@ def check_uninstall(uninstall_complete_page):
     """
     Given the resulting uninstall page, check to see if uninstall succeeded.
     """
-    uninstall_complete_page_message = uninstall_complete_page.find(
-        'div', {'class': re.compile('container-lg*', re.IGNORECASE)}
-    )
-    return 'job has been queued to uninstall' in uninstall_complete_page_message.text
+    return 'job has been queued to uninstall' in uninstall_complete_page.text
 
 
 def uninstall(session, target_name: str, target_id: Optional[int] = None, installation_path: Optional[str] = None):
