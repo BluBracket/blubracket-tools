@@ -2,6 +2,7 @@
 
 ## Requirements
 - [python >= 3.6](https://www.python.org/downloads/)
+- [python package requests](https://pypi.org/project/requests/)
 - [python package python-dotenv](https://pypi.org/project/python-dotenv/)
 - [python package beautifulsoup4](https://pypi.org/project/beautifulsoup4/)
 ## Bulk installing a GitHub Checks App across organizations

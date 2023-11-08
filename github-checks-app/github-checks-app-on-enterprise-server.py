@@ -22,14 +22,12 @@ if __name__ == '__main__':
     domain = urlparse(domain if '//' in domain else f'//{domain}').netloc
 
     query_params = {
-        'name': 'BluBracket Checks App',
+        'name': 'HashiCorp Vault Radar App',
         'webhook_secret': token_urlsafe(nbytes=32),
-        'callback_url': f'https://blubracket.blubracket.com/api/github_app/auth?domain={domain}',
-        'webhook_url': f'https://blubracket.blubracket.com/api/github_app/events?domain={domain}',
-        'request_oauth_on_install': True,
+        'webhook_url': f'https://api.hashicorp.cloud/api/github-apps/events?domain={domain}',
         'public': True,
         'webhook_active': True,
-        'url': 'https://blubracket.com',
+        'url': 'https://www.hashicorp.com/',
         'checks': 'write',
         'events[]': ['check_run', 'check_suite', 'pull_request'],
         'pull_requests': 'read',
