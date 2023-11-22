@@ -24,7 +24,7 @@ if __name__ == '__main__':
     query_params = {
         'name': 'HashiCorp Vault Radar App',
         'webhook_secret': token_urlsafe(nbytes=32),
-        'webhook_url': f'https://api.hashicorp.cloud/api/github-apps/events?domain={domain}',
+        'webhook_url': f'https://api.hashicorp.cloud/2023-05-01/vault-radar/api/github-apps/events?domain={domain}',
         'public': True,
         'webhook_active': True,
         'url': 'https://www.hashicorp.com/',
