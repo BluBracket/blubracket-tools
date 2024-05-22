@@ -16,7 +16,12 @@
 5. Manually add the `webhook_secret` into the form, since setting webhook secret via query params is no longer supported 
 6. Scroll down to click `Create GitHub App`
    
-7. Once the app is created, pull down the app configuration from your app settings page (the app name, app ID, client ID, client secret, private key), as well as the webhook secret from the URL above
+7. Once the app is created, take note of the webhook secret from the URL above, as well as these values from your app settings page
+    * app name
+    * app ID
+    * client ID
+    * client secret
+    * private key  
  ![GitHub Checks App Settings](github-checks-app-settings.png)
 8. Return to the Vault Radar UI, and you should be able to input your app configuration in this form below
  ![Vault Radar UI GitHub Apps Form](vault-radar-ui-github-apps-form.png)
