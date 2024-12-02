@@ -170,17 +170,13 @@ def install_and_uninstall_if_necessary(session, target_name, target_install_url)
 
         if not uninstall_success:
             print(
-                f'ERROR: Installation and uninstallation failed for GitHub organization/user: {target_name}. \n'
-                f'\t Manually uninstall the app from the organization, \n'
-                f'\t double check that org/user has been imported in BluBracket portal, then \n'
-                f'\t manually install the app on this organization or re-run the script. \n'
+                f'ERROR: Installation and uninstallation both failed for GitHub organization/user: {target_name}. \n'
                 f'\t If failure continues, contact support. '
             )
         else:
             print(
                 f'WARNING: Installation failed for GitHub organization/user: {target_name}. \n'
-                f'\t Uninstall succeeded. Double check that org/user has been imported in BluBracket portal, \n'
-                f'\t and re-run this script. If failure continues, contact support. '
+                f'\t Uninstall succeeded. Please re-run this script. If failure continues, contact support. '
             )
 
     return bool(installation_without_errors)
