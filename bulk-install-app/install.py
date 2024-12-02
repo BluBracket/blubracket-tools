@@ -22,12 +22,9 @@ def start_install(session, target_name, target_id):
     save_debug_info(folder='install-data', name='install', response=installation_response)
 
     installation_button = installation_page_soup.find('button', {'data-octo-click': 'install_integration'})
-    if 'install & authorize' in installation_button.string.lower():
+    if 'install' in installation_button.string.lower():
         print(f'User has permissions to install on organization/user: {target_name}. Installing.')
-    elif 'authorize & request' in installation_button.string.lower():
-        print(f'User does not have any permissions to install on organization/user: {target_name}. Skipping. ')
-        return
-    elif 'install, authorize, & request' in installation_button.string.lower():
+    elif 'request' in installation_button.string.lower():
         print(f'User does not have owner permissions to install on organization/user: {target_name}. Skipping. ')
         return
     else:
@@ -76,28 +73,18 @@ def process_install(session, authenticity_token, target_id, target_type, version
     }
 
     installed_response = session.post(url, installation_request_data, headers=headers)
-    installed_page_soup = BeautifulSoup(installed_response.content, 'html.parser')
     save_debug_info(folder='install-data', name='installed', response=installed_response)
 
-    return installed_page_soup
+    return installed_response
 
 
-def redirect_install(session, installed_page_soup) -> bool:
+def check_install(installed_response) -> bool:
     """
     Handle the redirect to the app's callback URL.
     Returns a boolean for whether the installation succeeded.
     """
-    redirect_element = installed_page_soup.find('a', {'id': 'redirect'})
-    if not redirect_element:
-        return False
-
-    redirect_url = redirect_element.get('href')
-    if not redirect_url:
-        return False
-
-    redirect_response = session.get(redirect_url)
-    save_debug_info(folder='install-data', name='redirect', response=redirect_response)
-    return 'success' in redirect_response.text.lower()
+    save_debug_info(folder='install-data', name='redirect', response=installed_response)
+    return 'was installed on' in installed_response.text.lower()
 
 
 def install(session, target_name, target_id) -> Optional[bool]:
@@ -111,7 +98,7 @@ def install(session, target_name, target_id) -> Optional[bool]:
         installation_data = start_install(session=session, target_name=target_name, target_id=target_id)
         if installation_data:
             authenticity_token, target_type, version_id, integration_fingerprint = installation_data
-            installed_page_soup = process_install(
+            installed_response = process_install(
                 session=session,
                 authenticity_token=authenticity_token,
                 target_id=target_id,
@@ -120,14 +107,11 @@ def install(session, target_name, target_id) -> Optional[bool]:
                 integration_fingerprint=integration_fingerprint,
             )
 
-            success = redirect_install(session=session, installed_page_soup=installed_page_soup)
-            if success:
-                print(f'Succeeded installation for GitHub organization/user: {target_name}')
-            else:
-                print(f'Failed installation for GitHub organization/user: {target_name}')
+            success = check_install(installed_response=installed_response)
             return success
         return None
     except Exception:
+        traceback.print_exc()
         return False
 
 

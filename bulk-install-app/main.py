@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import random
 from datetime import datetime
 
 import requests
