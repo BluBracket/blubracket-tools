@@ -31,6 +31,7 @@ if __name__ == '__main__':
     for organization_tuple in organizations(session, uninstall=args.uninstall):
         # Handle installation for one organization
         target_name, target_url = organization_tuple
+        action = 'installation' if not args.uninstall else 'uninstallation'
         if not args.uninstall:
             print(f'Found organization/user: {target_name}, to install app: {GITHUB_APP_NAME}.')
 
@@ -44,19 +45,18 @@ if __name__ == '__main__':
             # Marking uninstallation success
             success = uninstall(session=session, target_name=target_name, installation_path=target_url)
 
-            if success:
-                print(f'Succeeded uninstallation for GitHub organization/user: {target_name}')
-            else:
-                print(f'Failed uninstallation for GitHub organization/user: {target_name}')
-        print('\n')
+        if success:
+            print(f'Succeeded {action} for GitHub organization/user: {target_name}\n')
+        else:
+            print(f'Failed {action} for GitHub organization/user: {target_name}\n')
 
-        # Stop early if succeeded on max installations
+        # Stop early if succeeded on max installations/uninstallations
         success_counter += int(success)
         if MAX_ORGANIZATIONS and success_counter == MAX_ORGANIZATIONS:
             print(f'Hit max organizations: {MAX_ORGANIZATIONS}, finishing. ')
             break
 
         # Sleep briefly between installations
-        delay = random.randint(5, 20)
+        delay = 2
         asyncio.run(asyncio.sleep(delay))
     print('\n')
