@@ -30,24 +30,22 @@ if __name__ == '__main__':
     for organization_tuple in organizations(session, uninstall=args.uninstall):
         # Handle installation for one organization
         target_name, target_url = organization_tuple
-        action = 'installation' if not args.uninstall else 'uninstallation'
-        if not args.uninstall:
-            print(f'Found organization/user: {target_name}, to install app: {GITHUB_APP_NAME}.')
+        action = 'install' if not args.uninstall else 'uninstall'
+        print(f'Found organization/user: {target_name}, to {action} app: {GITHUB_APP_NAME}.')
 
+        if not args.uninstall:
             # Marking installation success
             success = install_and_uninstall_if_necessary(
                 session=session, target_name=target_name, target_install_url=target_url
             )
         else:
-            print(f'Found organization/user: {target_name}, to uninstall app: {GITHUB_APP_NAME}.')
-
             # Marking uninstallation success
             success = uninstall(session=session, target_name=target_name, installation_path=target_url)
 
         if success:
-            print(f'Succeeded {action} for GitHub organization/user: {target_name}\n')
+            print(f'Succeeded {action}ation for GitHub organization/user: {target_name}\n')
         else:
-            print(f'Failed {action} for GitHub organization/user: {target_name}\n')
+            print(f'Failed {action}ation for GitHub organization/user: {target_name}\n')
 
         # Stop early if succeeded on max installations/uninstallations
         success_counter += int(success)
