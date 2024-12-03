@@ -44,11 +44,13 @@ if __name__ == '__main__':
 
         if success:
             print(f'Succeeded {action}ation for GitHub organization/user: {target_name}\n')
-        else:
+        elif success is False:
             print(f'Failed {action}ation for GitHub organization/user: {target_name}\n')
+        else:
+            print(f'Skipped {action}ation for GitHub organization/user: {target_name}\n')
 
         # Stop early if succeeded on max installations/uninstallations
-        success_counter += int(success)
+        success_counter += int(bool(success))
         if MAX_ORGANIZATIONS and success_counter == MAX_ORGANIZATIONS:
             print(f'Hit max organizations: {MAX_ORGANIZATIONS}, finishing. ')
             break

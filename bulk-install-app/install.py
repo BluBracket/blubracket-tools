@@ -78,7 +78,7 @@ def process_install(session, authenticity_token, target_id, target_type, version
     return installed_response
 
 
-def check_install(installed_response) -> bool:
+def check_install_result(installed_response) -> bool:
     """
     Handle the redirect to the app's callback URL.
     Returns a boolean for whether the installation succeeded.
@@ -107,7 +107,7 @@ def install(session, target_name, target_id) -> Optional[bool]:
                 integration_fingerprint=integration_fingerprint,
             )
 
-            success = check_install(installed_response=installed_response)
+            success = check_install_result(installed_response=installed_response)
             return success
         return None
     except Exception:
@@ -115,7 +115,7 @@ def install(session, target_name, target_id) -> Optional[bool]:
         return False
 
 
-def check_uninstall(uninstall_complete_page):
+def check_uninstall_result(uninstall_complete_page):
     """
     Given the resulting uninstall page, check to see if uninstall succeeded.
     """
@@ -145,6 +145,10 @@ def uninstall(session, target_name: str, target_id: Optional[int] = None, instal
             'form', {'action': re.compile('/settings/installations/[0-9]*$')}
         )
 
+        if not uninstallation_form:
+            print(f'User does not have owner permissions to uninstall on organization/user: {target_name}. Skipping.')
+            return
+
         authenticity_token = uninstallation_form.find('input', {'name': 'authenticity_token'}).get('value')
         uninstallation_action = uninstallation_form.get('action')
 
@@ -152,7 +156,7 @@ def uninstall(session, target_name: str, target_id: Optional[int] = None, instal
         uninstall_complete_response = session.post(f'https://{DOMAIN}{uninstallation_action}', uninstall_data)
         save_debug_info(folder='uninstall-data', name=f'uninstall-{target_name}-complete', response=uninstall_complete_response)
         uninstall_complete_page = BeautifulSoup(uninstall_complete_response.content, 'html.parser')
-        return check_uninstall(uninstall_complete_page)
+        return check_uninstall_result(uninstall_complete_page)
     except Exception:
         traceback.print_exc()
         return False
