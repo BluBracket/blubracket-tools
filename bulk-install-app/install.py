@@ -87,13 +87,15 @@ def check_install_result(installed_response) -> bool:
     return 'was installed on' in installed_response.text.lower()
 
 
-def install(session, target_name, target_id) -> Optional[bool]:
+def install(session, target_name, target_url) -> Optional[bool]:
     """
     Manages full installation workflow - start, process, redirect.
 
     Returns boolean for whether installation has occurred without any errors.
     Returns None if user did not have permissions to install, or if errors occurred in pre-installation parsing.
     """
+    target_id = parse_qs(urlparse(target_url).query)['target_id'][0]
+
     try:
         installation_data = start_install(session=session, target_name=target_name, target_id=target_id)
         if installation_data:
@@ -122,20 +124,20 @@ def check_uninstall_result(uninstall_complete_page):
     return 'has been uninstalled' in uninstall_complete_page.text
 
 
-def uninstall(session, target_name: str, target_id: Optional[int] = None, installation_path: Optional[str] = None):
+def uninstall(session, target_name: str, target_id: Optional[int] = None, target_url: Optional[str] = None):
     """
     Manages full uninstallation workflow - start, complete.
     Returns boolean for whether uninstall succeeded.
     """
-    if not target_id and not installation_path:
-        print(f'Neither target_id nor installation path was passed in, cannot uninstall organization/user: {target_name}.')
+    if not target_id and not target_url:
+        print(f'Neither target_id nor target_url was passed in, cannot uninstall organization/user: {target_name}.')
         return False
 
     try:
         if target_id:
             url = f'https://{DOMAIN}/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations/new/permissions?target_id={target_id}'
         else:
-            url = f'https://{DOMAIN}{installation_path}'
+            url = f'https://{DOMAIN}{target_url}'
 
         uninstall_start_response = session.get(url)
         save_debug_info(folder='uninstall-data', name=f'uninstall-{target_name}-start', response=uninstall_start_response)
@@ -154,33 +156,11 @@ def uninstall(session, target_name: str, target_id: Optional[int] = None, instal
 
         uninstall_data = {'authenticity_token': authenticity_token, '_method': 'delete'}
         uninstall_complete_response = session.post(f'https://{DOMAIN}{uninstallation_action}', uninstall_data)
-        save_debug_info(folder='uninstall-data', name=f'uninstall-{target_name}-complete', response=uninstall_complete_response)
+        save_debug_info(
+            folder='uninstall-data', name=f'uninstall-{target_name}-complete', response=uninstall_complete_response
+        )
         uninstall_complete_page = BeautifulSoup(uninstall_complete_response.content, 'html.parser')
         return check_uninstall_result(uninstall_complete_page)
     except Exception:
         traceback.print_exc()
         return False
-
-
-def install_and_uninstall_if_necessary(session, target_name, target_install_url):
-    """
-    Attempts to install the app on the organization/user. Filters out organization/user if logged in user does not
-    have the correct permissions.
-    """
-    target_id = parse_qs(urlparse(target_install_url).query)['target_id'][0]
-    installation_without_errors = install(session=session, target_name=target_name, target_id=target_id)
-    if installation_without_errors is False:
-        uninstall_success = uninstall(session=session, target_name=target_name, target_id=target_id)
-
-        if not uninstall_success:
-            print(
-                f'ERROR: Installation and uninstallation both failed for GitHub organization/user: {target_name}. \n'
-                f'\t If failure continues, contact support. '
-            )
-        else:
-            print(
-                f'WARNING: Installation failed for GitHub organization/user: {target_name}. \n'
-                f'\t Uninstall succeeded. Please re-run this script. If failure continues, contact support. '
-            )
-
-    return bool(installation_without_errors)

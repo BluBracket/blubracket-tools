@@ -4,7 +4,7 @@ from datetime import datetime
 
 import requests
 from config import DOMAIN, GITHUB_APP_NAME, MAX_ORGANIZATIONS
-from install import install_and_uninstall_if_necessary, uninstall
+from install import uninstall, install
 from login import setup_login
 from organization import organizations
 
@@ -35,12 +35,10 @@ if __name__ == '__main__':
 
         if not args.uninstall:
             # Marking installation success
-            success = install_and_uninstall_if_necessary(
-                session=session, target_name=target_name, target_install_url=target_url
-            )
+            success = install(session=session, target_name=target_name, target_url=target_url)
         else:
             # Marking uninstallation success
-            success = uninstall(session=session, target_name=target_name, installation_path=target_url)
+            success = uninstall(session=session, target_name=target_name, target_url=target_url)
 
         if success:
             print(f'Succeeded {action}ation for GitHub organization/user: {target_name}\n')
