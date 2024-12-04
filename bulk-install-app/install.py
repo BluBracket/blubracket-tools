@@ -22,12 +22,9 @@ def start_install(session, target_name, target_id):
     save_debug_info(folder='install-data', name='install', response=installation_response)
 
     installation_button = installation_page_soup.find('button', {'data-octo-click': 'install_integration'})
-    if 'install & authorize' in installation_button.string.lower():
+    if 'install' in installation_button.string.lower():
         print(f'User has permissions to install on organization/user: {target_name}. Installing.')
-    elif 'authorize & request' in installation_button.string.lower():
-        print(f'User does not have any permissions to install on organization/user: {target_name}. Skipping. ')
-        return
-    elif 'install, authorize, & request' in installation_button.string.lower():
+    elif 'request' in installation_button.string.lower():
         print(f'User does not have owner permissions to install on organization/user: {target_name}. Skipping. ')
         return
     else:
@@ -76,31 +73,21 @@ def process_install(session, authenticity_token, target_id, target_type, version
     }
 
     installed_response = session.post(url, installation_request_data, headers=headers)
-    installed_page_soup = BeautifulSoup(installed_response.content, 'html.parser')
     save_debug_info(folder='install-data', name='installed', response=installed_response)
 
-    return installed_page_soup
+    return installed_response
 
 
-def redirect_install(session, installed_page_soup) -> bool:
+def check_install_result(installed_response) -> bool:
     """
     Handle the redirect to the app's callback URL.
     Returns a boolean for whether the installation succeeded.
     """
-    redirect_element = installed_page_soup.find('a', {'id': 'redirect'})
-    if not redirect_element:
-        return False
-
-    redirect_url = redirect_element.get('href')
-    if not redirect_url:
-        return False
-
-    redirect_response = session.get(redirect_url)
-    save_debug_info(folder='install-data', name='redirect', response=redirect_response)
-    return 'success' in redirect_response.text.lower()
+    save_debug_info(folder='install-data', name='check', response=installed_response)
+    return 'was installed on' in installed_response.text.lower()
 
 
-def install(session, target_name, target_id) -> Optional[bool]:
+def install(session, target_name, target_url) -> Optional[bool]:
     """
     Manages full installation workflow - start, process, redirect.
 
@@ -108,10 +95,12 @@ def install(session, target_name, target_id) -> Optional[bool]:
     Returns None if user did not have permissions to install, or if errors occurred in pre-installation parsing.
     """
     try:
+        target_id = parse_qs(urlparse(target_url).query)['target_id'][0]
+
         installation_data = start_install(session=session, target_name=target_name, target_id=target_id)
         if installation_data:
             authenticity_token, target_type, version_id, integration_fingerprint = installation_data
-            installed_page_soup = process_install(
+            installed_response = process_install(
                 session=session,
                 authenticity_token=authenticity_token,
                 target_id=target_id,
@@ -120,38 +109,35 @@ def install(session, target_name, target_id) -> Optional[bool]:
                 integration_fingerprint=integration_fingerprint,
             )
 
-            success = redirect_install(session=session, installed_page_soup=installed_page_soup)
-            if success:
-                print(f'Succeeded installation for GitHub organization/user: {target_name}')
-            else:
-                print(f'Failed installation for GitHub organization/user: {target_name}')
+            success = check_install_result(installed_response=installed_response)
             return success
         return None
     except Exception:
+        traceback.print_exc()
         return False
 
 
-def check_uninstall(uninstall_complete_page):
+def check_uninstall_result(uninstall_complete_page):
     """
     Given the resulting uninstall page, check to see if uninstall succeeded.
     """
-    return 'job has been queued to uninstall' in uninstall_complete_page.text
+    return 'has been uninstalled' in uninstall_complete_page.text
 
 
-def uninstall(session, target_name: str, target_id: Optional[int] = None, installation_path: Optional[str] = None):
+def uninstall(session, target_name: str, target_id: Optional[int] = None, target_url: Optional[str] = None):
     """
     Manages full uninstallation workflow - start, complete.
     Returns boolean for whether uninstall succeeded.
     """
-    if not target_id and not installation_path:
-        print(f'Neither target_id nor installation path was passed in, cannot uninstall organization/user: {target_name}.')
+    if not target_id and not target_url:
+        print(f'Neither target_id nor target_url was passed in, cannot uninstall organization/user: {target_name}.')
         return False
 
     try:
         if target_id:
             url = f'https://{DOMAIN}/{APPS_LOCATION}/{GITHUB_APP_NAME}/installations/new/permissions?target_id={target_id}'
         else:
-            url = f'https://{DOMAIN}{installation_path}'
+            url = f'https://{DOMAIN}{target_url}'
 
         uninstall_start_response = session.get(url)
         save_debug_info(folder='uninstall-data', name=f'uninstall-{target_name}-start', response=uninstall_start_response)
@@ -161,42 +147,20 @@ def uninstall(session, target_name: str, target_id: Optional[int] = None, instal
             'form', {'action': re.compile('/settings/installations/[0-9]*$')}
         )
 
+        if not uninstallation_form:
+            print(f'User does not have owner permissions to uninstall on organization/user: {target_name}. Skipping.')
+            return
+
         authenticity_token = uninstallation_form.find('input', {'name': 'authenticity_token'}).get('value')
         uninstallation_action = uninstallation_form.get('action')
 
         uninstall_data = {'authenticity_token': authenticity_token, '_method': 'delete'}
         uninstall_complete_response = session.post(f'https://{DOMAIN}{uninstallation_action}', uninstall_data)
-        save_debug_info(folder='uninstall-data', name=f'uninstall-{target_name}-complete', response=uninstall_complete_response)
+        save_debug_info(
+            folder='uninstall-data', name=f'uninstall-{target_name}-complete', response=uninstall_complete_response
+        )
         uninstall_complete_page = BeautifulSoup(uninstall_complete_response.content, 'html.parser')
-        return check_uninstall(uninstall_complete_page)
+        return check_uninstall_result(uninstall_complete_page)
     except Exception:
         traceback.print_exc()
         return False
-
-
-def install_and_uninstall_if_necessary(session, target_name, target_install_url):
-    """
-    Attempts to install the app on the organization/user. Filters out organization/user if logged in user does not
-    have the correct permissions.
-    """
-    target_id = parse_qs(urlparse(target_install_url).query)['target_id'][0]
-    installation_without_errors = install(session=session, target_name=target_name, target_id=target_id)
-    if installation_without_errors is False:
-        uninstall_success = uninstall(session=session, target_name=target_name, target_id=target_id)
-
-        if not uninstall_success:
-            print(
-                f'ERROR: Installation and uninstallation failed for GitHub organization/user: {target_name}. \n'
-                f'\t Manually uninstall the app from the organization, \n'
-                f'\t double check that org/user has been imported in BluBracket portal, then \n'
-                f'\t manually install the app on this organization or re-run the script. \n'
-                f'\t If failure continues, contact support. '
-            )
-        else:
-            print(
-                f'WARNING: Installation failed for GitHub organization/user: {target_name}. \n'
-                f'\t Uninstall succeeded. Double check that org/user has been imported in BluBracket portal, \n'
-                f'\t and re-run this script. If failure continues, contact support. '
-            )
-
-    return bool(installation_without_errors)

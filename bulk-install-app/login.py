@@ -51,7 +51,7 @@ def check_login_success(login_page_main):
     Given the resulting login page, check to see if login succeeded.
     """
     login_page_header = login_page_main.find('h1')
-    return 'sign in to github' not in login_page_header.string.lower()
+    return 'sign in to your account' not in login_page_header.string.lower()
 
 
 def check_tfa_success(tfa_login_page):
