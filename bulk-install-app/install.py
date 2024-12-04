@@ -83,7 +83,7 @@ def check_install_result(installed_response) -> bool:
     Handle the redirect to the app's callback URL.
     Returns a boolean for whether the installation succeeded.
     """
-    save_debug_info(folder='install-data', name='redirect', response=installed_response)
+    save_debug_info(folder='install-data', name='check', response=installed_response)
     return 'was installed on' in installed_response.text.lower()
 
 
