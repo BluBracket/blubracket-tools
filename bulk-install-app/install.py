@@ -94,9 +94,9 @@ def install(session, target_name, target_url) -> Optional[bool]:
     Returns boolean for whether installation has occurred without any errors.
     Returns None if user did not have permissions to install, or if errors occurred in pre-installation parsing.
     """
-    target_id = parse_qs(urlparse(target_url).query)['target_id'][0]
-
     try:
+        target_id = parse_qs(urlparse(target_url).query)['target_id'][0]
+
         installation_data = start_install(session=session, target_name=target_name, target_id=target_id)
         if installation_data:
             authenticity_token, target_type, version_id, integration_fingerprint = installation_data
