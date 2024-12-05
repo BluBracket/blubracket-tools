@@ -14,7 +14,11 @@ def pre_login(session):
     redirect_soup = BeautifulSoup(pre_login_response.content, 'html.parser')
 
     redirect_form = redirect_soup.find('meta', {'content': re.compile('/idp/*')})
-    return redirect_form.get('content')[len('0:url='):]
+    redirect_url = redirect_form.get('content')[len('0:url='):]
+    final_redirect_url = session.get(redirect_url, allow_redirects=True).url
+    print(final_redirect_url)
+
+    return final_redirect_url
 
 
 def start_login(session, target_url):
@@ -42,10 +46,10 @@ def complete_login(session, target_url, login_form):
         'pf.adapterId': 'HTMLLoginFormAdapter',
     }
 
-    target_url_base = urlparse(target_url).netloc
-    target_url_path = login_form.get('action')
+    # target_url_base = urlparse(target_url).netloc
+    # target_url_path = login_form.get('action')
 
-    login_response = session.post(f'https://{target_url_base}{target_url_path}', login_request_data)
+    login_response = session.post(target_url, login_request_data)
     login_page_soup = BeautifulSoup(login_response.content, 'html.parser')
     save_debug_info(folder='sso-login-data', name='login-complete', response=login_response)
 
@@ -97,9 +101,9 @@ def handle_tfa(session, login_page_soup):
 def setup_login(session):
     try:
         target_url = pre_login(session)
-        login_form = start_login(session=session, target_url=target_url)
+        # login_form = start_login(session=session, target_url=target_url)
 
-        login_page_soup = complete_login(session=session, target_url=target_url, login_form=login_form)
+        login_page_soup = complete_login(session=session, target_url=target_url, login_form=None)
 
         login_success = check_login_success(login_page_soup=login_page_soup)
         login_success = login_success and handle_tfa(session=session, login_page_soup=login_page_soup)
