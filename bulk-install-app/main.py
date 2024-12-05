@@ -5,7 +5,7 @@ from datetime import datetime
 import requests
 from config import DOMAIN, GITHUB_APP_NAME, MAX_ORGANIZATIONS
 from install import uninstall, install
-from login import setup_login
+from sso_login import setup_login
 from organization import organizations
 
 
