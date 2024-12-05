@@ -9,12 +9,12 @@ from debug import save_debug_info
 
 def pre_login(session):
     """Handle any redirects and retrieve the actual login url"""
-    target_response = session.get(f'https://{DOMAIN}/login?force_external=true&return_to=https%3A%2F%2F{DOMAIN}%2Flogin')
-    target_url = target_response.url
-    save_debug_info(folder='sso-login-data', name='pre-login', response=target_response)
+    pre_login_response = session.get(f'https://{DOMAIN}/login?force_external=true&return_to=https%3A%2F%2F{DOMAIN}%2Flogin')
+    save_debug_info(folder='sso-login-data', name='pre-login', response=pre_login_response)
+    redirect_soup = BeautifulSoup(pre_login_response.content, 'html.parser')
 
-    print(target_url)
-    return target_url
+    redirect_form = redirect_soup.find('meta', {'content': re.compile('/idp/*')})
+    return redirect_form.get('content')[len('0:url='):]
 
 
 def start_login(session, target_url):
