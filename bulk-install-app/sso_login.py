@@ -7,6 +7,9 @@ from config import DOMAIN, PASSWORD, USERNAME
 from debug import save_debug_info
 
 
+_USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+
+
 def pre_login(session):
     """Handle any redirects and retrieve the actual login url"""
     pre_login_response = session.get(f'https://{DOMAIN}/login?force_external=true&return_to=https%3A%2F%2F{DOMAIN}%2Flogin')
@@ -110,6 +113,8 @@ def handle_tfa(session, login_page_soup):
 
 
 def setup_login(session):
+    session.headers['User-Agent'] = _USER_AGENT
+
     try:
         target_url = pre_login(session)
         # login_form = start_login(session=session, target_url=target_url)
