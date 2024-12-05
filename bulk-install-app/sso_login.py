@@ -9,7 +9,11 @@ from debug import save_debug_info
 
 def pre_login(session):
     """Handle any redirects and retrieve the actual login url"""
-    target_url = session.get(f'https://{DOMAIN}/login').url
+    target_response = session.get(f'https://{DOMAIN}/login?force_external=true&return_to=https%3A%2F%2F{DOMAIN}%2Flogin')
+    target_url = target_response.url
+    save_debug_info(folder='sso-login-data', name='pre-login', response=target_response)
+
+    print(target_url)
     return target_url
 
 
