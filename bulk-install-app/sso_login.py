@@ -49,7 +49,18 @@ def complete_login(session, target_url, login_form):
     # target_url_base = urlparse(target_url).netloc
     # target_url_path = login_form.get('action')
 
-    login_response = session.post(target_url, login_request_data)
+    # Attempt to bypass bot detection using user agents
+    # https://stackoverflow.com/questions/13303449/urllib2-httperror-http-error-403-forbidden/13303773#13303773
+    login_request_headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+        'Accept-Encoding': 'none',
+        'Accept-Language': 'en-US,en;q=0.8',
+        'Connection': 'keep-alive',
+    }
+
+    login_response = session.post(target_url, login_request_data, headers=login_request_headers)
     login_page_soup = BeautifulSoup(login_response.content, 'html.parser')
     save_debug_info(folder='sso-login-data', name='login-complete', response=login_response)
 
