@@ -5,13 +5,19 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from config import DOMAIN, PASSWORD, USERNAME
 from debug import save_debug_info
+import time
+import json
 
 
-_USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'
+_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
 
 
 def pre_login(session):
     """Handle any redirects and retrieve the actual login url"""
+    og_url = json.loads(session.get('https://gap.blubracket.com/api/login').content).get('redirect_url')
+    print(session.get(og_url).url)
+    return og_url
+
     pre_login_response = session.get(f'https://{DOMAIN}/login?force_external=true&return_to=https%3A%2F%2F{DOMAIN}%2Flogin')
     save_debug_info(folder='sso-login-data', name='pre-login', response=pre_login_response)
     redirect_soup = BeautifulSoup(pre_login_response.content, 'html.parser')
@@ -19,6 +25,7 @@ def pre_login(session):
     redirect_form = redirect_soup.find('meta', {'content': re.compile('/idp/*')})
     redirect_url = redirect_form.get('content')[len('0:url='):]
     final_redirect_url = session.get(redirect_url, allow_redirects=True).url
+    save_debug_info(folder='sso-login-data', name='redirect-login', response=final_redirect_url)
     print(final_redirect_url)
 
     return final_redirect_url
@@ -49,18 +56,25 @@ def complete_login(session, target_url, login_form):
         'pf.adapterId': 'HTMLLoginFormAdapter',
     }
 
-    # target_url_base = urlparse(target_url).netloc
-    # target_url_path = login_form.get('action')
+    target_url_base = urlparse(target_url).netloc
+    target_url_path = login_form.get('action')
+    target_url = f'https://{target_url_base}{target_url_path}'
 
+    print(target_url)
     # Attempt to bypass bot detection using user agents
     # https://stackoverflow.com/questions/13303449/urllib2-httperror-http-error-403-forbidden/13303773#13303773
     login_request_headers = {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
         'Accept-Encoding': 'none',
         'Accept-Language': 'en-US,en;q=0.8',
         'Connection': 'keep-alive',
+        # 'Content-Type': 'application/x-www-form-urlencoded',
+        # 'Host': 'https://' + urlparse(target_url).netloc,
+        # 'Referer': 'https://' + urlparse(target_url).netloc,
+        # 'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+        # 'sec-ch-ua-platform': '"macOS"',
     }
 
     login_response = session.post(target_url, login_request_data, headers=login_request_headers)
@@ -117,9 +131,9 @@ def setup_login(session):
 
     try:
         target_url = pre_login(session)
-        # login_form = start_login(session=session, target_url=target_url)
+        login_form = start_login(session=session, target_url=target_url)
 
-        login_page_soup = complete_login(session=session, target_url=target_url, login_form=None)
+        login_page_soup = complete_login(session=session, target_url=target_url, login_form=login_form)
 
         login_success = check_login_success(login_page_soup=login_page_soup)
         login_success = login_success and handle_tfa(session=session, login_page_soup=login_page_soup)
